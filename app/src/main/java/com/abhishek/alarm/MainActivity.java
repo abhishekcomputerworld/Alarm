@@ -43,23 +43,23 @@ public class MainActivity extends AppCompatActivity {
         mButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                toggleAlarm();
-               /* AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+               // toggleAlarm();
+                AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
                 Intent intent = new Intent(MainActivity.this, AlarmReceiver.class);
                 intent.setAction("com.example.myapp.ALARM_TRIGGER");
                 PendingIntent pendingIntent = PendingIntent.getBroadcast(MainActivity.this, 0, intent, 0);
                 alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), 1 * 60 * 1000, pendingIntent);
-                Toast.makeText(MainActivity.this, "Alarm set in " + 20 + " minute", Toast.LENGTH_LONG).show();*/
+                Toast.makeText(MainActivity.this, "Alarm set in " + 20 + " minute", Toast.LENGTH_LONG).show();
 
             }
         });
 
 
         // If the service is running, we assume the alarm is enabled
-        if (isServiceRunning(AlarmService.class)) {
+       /* if (isServiceRunning(AlarmService.class)) {
             mAlarmEnabled = true;
             mButton.setText("Stop Alarm");
-        }
+        }*/
     }
 
     private void toggleAlarm() {
