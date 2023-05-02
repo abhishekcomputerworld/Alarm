@@ -21,6 +21,7 @@ import androidx.work.NetworkType;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity {
@@ -33,38 +34,35 @@ public class MainActivity extends AppCompatActivity {
     private AlarmManager alarmManager;
     private PendingIntent alarmIntent;
 
+    SharedPreferences preferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        preferences = PreferenceManager.getDefaultSharedPreferences(this);
         mButton = findViewById(R.id.button);
+        mAlarmEnabled = preferences.getBoolean("alarm_enabled",false);
         mButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-               // toggleAlarm();
-                AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-                Intent intent = new Intent(MainActivity.this, AlarmReceiver.class);
-                intent.setAction("com.example.myapp.ALARM_TRIGGER");
-                PendingIntent pendingIntent = PendingIntent.getBroadcast(MainActivity.this, 0, intent, 0);
-                alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), 1 * 60 * 1000, pendingIntent);
-                Toast.makeText(MainActivity.this, "Alarm set in " + 20 + " minute", Toast.LENGTH_LONG).show();
-
+                mAlarmEnabled = preferences.getBoolean("alarm_enabled",false);
+                toggleAlarm();
             }
         });
 
 
         // If the service is running, we assume the alarm is enabled
-       /* if (isServiceRunning(AlarmService.class)) {
-            mAlarmEnabled = true;
+        if (mAlarmEnabled) {
             mButton.setText("Stop Alarm");
-        }*/
+        }else{
+            mButton.setText("Start Alarm");
+        }
     }
 
     private void toggleAlarm() {
-      //  mAlarmEnabled = !mAlarmEnabled;
-        if (true) {
+       // startAlarm();
+         if (!mAlarmEnabled) {
             startAlarm();
             mButton.setText("Stop Alarm");
         } else {
@@ -73,25 +71,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void startAlarm2() {
-        // Start the foreground service to keep the app running in the background
-        Intent serviceIntent = new Intent(this, AlarmService.class);
-        serviceIntent.setAction(AlarmService.START_FOREGROUND_ACTION);
-        ContextCompat.startForegroundService(this, serviceIntent);
 
-        // Save the alarm state to SharedPreferences
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        SharedPreferences.Editor editor = preferences.edit();
-        editor.putBoolean("alarm_enabled", true);
-        editor.apply();
-    }
-
-    private void stopAlarm2() {
-        // Stop the foreground service to allow the app to be closed
-        Intent serviceIntent = new Intent(this, AlarmService.class);
-        serviceIntent.setAction(AlarmService.STOP_FOREGROUND_ACTION);
-        startService(serviceIntent);
-    }
 
     private boolean isServiceRunning(Class<? extends Service> serviceClass) {
         ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
@@ -103,47 +83,49 @@ public class MainActivity extends AppCompatActivity {
         return false;
     }
 
-
-    private void startAlarm3() {
-        alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-
-        Intent intent = new Intent(this, AlarmReceiver.class);
-        intent.setAction("com.example.myapp.ALARM_TRIGGER");
-        alarmIntent = PendingIntent.getBroadcast(this, 0, intent, 0);
-
-        long timeInterval = 1 * 60 * 1000; // 20 minutes
-        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), timeInterval, alarmIntent);
-
-        Toast.makeText(this, "Alarm started", Toast.LENGTH_SHORT).show();
-
+    private boolean isAlarmReceiverRunning() {
+        ActivityManager activityManager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        List<ActivityManager.RunningServiceInfo> runningServices = activityManager.getRunningServices(Integer.MAX_VALUE);
+        for (ActivityManager.RunningServiceInfo serviceInfo : runningServices) {
+            if (serviceInfo.service.getClassName().equals(AlarmReceiver.class.getName())) {
+                return true;
+            }
+        }
+        return false;
     }
+    private void stopAlarm() {
+        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        Intent alarmIntent = new Intent(this, AlarmReceiver.class);
+        alarmIntent.setAction("com.example.myapp.ALARM_TRIGGER");
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, alarmIntent, PendingIntent.FLAG_IMMUTABLE);
 
-    private void stopAlarm3() {
         if (alarmManager != null) {
-            alarmManager.cancel(alarmIntent);
+            alarmManager.cancel(pendingIntent);
+            SharedPreferences.Editor editor = preferences.edit();
+            editor.putBoolean("alarm_enabled", false);
+            editor.commit(); // Use commit instead of apply
             Toast.makeText(this, "Alarm stopped", Toast.LENGTH_SHORT).show();
         }
     }
 
     private void startAlarm() {
-        Constraints constraints = new Constraints.Builder()
-                .setRequiredNetworkType(NetworkType.CONNECTED)
-                .build();
+       /* Constraints constraints = new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build();
+        PeriodicWorkRequest alarmWorker = new PeriodicWorkRequest.Builder(AlarmWorker.class, 30, TimeUnit.SECONDS).setConstraints(constraints).build();
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork("alarmWorker", ExistingPeriodicWorkPolicy.REPLACE, alarmWorker);
+        Toast.makeText(this, "Alarm started", Toast.LENGTH_SHORT).show();*/
 
-        PeriodicWorkRequest alarmWorker =
-                new PeriodicWorkRequest.Builder(AlarmWorker.class, 30, TimeUnit.SECONDS)
-                        .setConstraints(constraints)
-                        .build();
+         alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent(MainActivity.this, AlarmReceiver.class);
+        intent.setAction("com.example.myapp.ALARM_TRIGGER");
+         alarmIntent = PendingIntent.getBroadcast(MainActivity.this, 0, intent, PendingIntent.FLAG_IMMUTABLE);
+        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), 20 * 60 * 1000, alarmIntent);
+        Toast.makeText(MainActivity.this, "Alarm set in " + 20 + " minute", Toast.LENGTH_LONG).show();
 
-        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
-                "alarmWorker", ExistingPeriodicWorkPolicy.REPLACE, alarmWorker
-        );
-
-        Toast.makeText(this, "Alarm started", Toast.LENGTH_SHORT).show();
+        // Save the alarm state to SharedPreferences
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putBoolean("alarm_enabled", true);
+        editor.apply();
     }
 
-    private void stopAlarm() {
-        WorkManager.getInstance(this).cancelUniqueWork("alarmWorker");
-        Toast.makeText(this, "Alarm stopped", Toast.LENGTH_SHORT).show();
-    }
+
 }

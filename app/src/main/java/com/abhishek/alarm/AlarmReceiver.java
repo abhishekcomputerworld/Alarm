@@ -19,7 +19,7 @@ import androidx.core.app.NotificationManagerCompat;
 public class AlarmReceiver extends BroadcastReceiver {
     private static final String TAG = "AlarmReceiver";
     private static final int ALARM_REQUEST_CODE = 123;
-    private static final int INTERVAL = 1 * 60 * 1000;
+    private static final int INTERVAL = 20 * 60 * 1000;
     private MediaPlayer mp;
 
     @Override
