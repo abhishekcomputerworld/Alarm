@@ -1,5 +1,7 @@
 package com.abhishek.alarm;
 
+import static android.os.Build.VERSION.SDK_INT;
+
 import android.app.ActivityManager;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -7,6 +9,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.view.View;
@@ -117,8 +120,14 @@ public class MainActivity extends AppCompatActivity {
          alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         Intent intent = new Intent(MainActivity.this, AlarmReceiver.class);
         intent.setAction("com.example.myapp.ALARM_TRIGGER");
-         alarmIntent = PendingIntent.getBroadcast(MainActivity.this, 0, intent, PendingIntent.FLAG_IMMUTABLE);
-        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), 20 * 60 * 1000, alarmIntent);
+        int flags;
+        if (SDK_INT >= Build.VERSION_CODES.S) {
+            flags = PendingIntent.FLAG_MUTABLE;
+        } else  {
+            flags = 0;
+        }
+         alarmIntent = PendingIntent.getBroadcast(MainActivity.this, 0, intent, flags);
+        alarmManager.setInexactRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), 60000 /*19 * 60 * 1000*/, alarmIntent);
         Toast.makeText(MainActivity.this, "Alarm set in " + 20 + " minute", Toast.LENGTH_LONG).show();
 
         // Save the alarm state to SharedPreferences

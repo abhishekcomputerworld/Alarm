@@ -88,7 +88,7 @@ public class AlarmService extends Service {
         alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), 1 * 30 * 1000, pendingIntent);
       //  Toast.makeText(this, "Alarm set in " + 1 + " seconds",Toast.LENGTH_LONG).show();
  */
-        mediaPlayer=MediaPlayer.create(this, R.raw.civil_defense);
+        mediaPlayer=MediaPlayer.create(this, R.raw.alarm_clock);
         mediaPlayer.start();
     }
 
